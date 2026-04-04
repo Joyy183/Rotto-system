@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Dessert System</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gradient-to-br from-purple-600 to-indigo-700 min-h-screen flex items-center justify-center">
+
+  <!-- LOGIN -->
+  <div id="loginPage" class="bg-white p-6 rounded-2xl shadow-xl w-80">
+    <h2 class="text-xl font-bold mb-4 text-center">🍰 Shop Login</h2>
+
+    <input id="username" placeholder="Shop Name"
+      class="w-full p-2 border rounded mb-3">
+
+    <button onclick="login()"
+      class="w-full bg-indigo-600 text-white p-2 rounded hover:bg-indigo-700">
+      Login
+    </button>
+  </div>
+
+  <!-- APP -->
+  <div id="appPage" class="hidden w-full max-w-md">
+
+    <h1 class="text-white text-center text-2xl mb-4">Dessert Orders</h1>
+
+    <!-- ORDER BOX -->
+    <div class="bg-white p-5 rounded-2xl shadow-xl">
+
+      <h2 class="text-lg font-semibold mb-3">Make Order</h2>
+
+      <div id="orderItems" class="space-y-3">
+
+        <div class="flex gap-2">
+          <input type="text" placeholder="Product"
+            class="w-full p-2 border rounded product">
+
+          <input type="number" placeholder="Qty"
+            class="w-20 p-2 border rounded quantity">
+        </div>
+
+      </div>
+
+      <button onclick="addItem()"
+        class="mt-2 text-sm text-indigo-600">+ Add Item</button>
+
+      <button onclick="addOrder()"
+        class="w-full bg-indigo-600 text-white p-2 rounded mt-3 hover:bg-indigo-700">
+        Submit Order
+      </button>
+
+    </div>
+
+    <!-- ORDERS -->
+    <div class="mt-4">
+      <h2 class="text-white mb-2">My Orders</h2>
+      <ul id="orders" class="space-y-2"></ul>
+    </div>
+
+  </div>
+
+<script>
+
+let currentUser = "";
+let orders = JSON.parse(localStorage.getItem("orders")) || [];
+
+// LOGIN
+function login() {
+  const username = document.getElementById("username").value;
+
+  if (!username) {
+    alert("Enter shop name");
+    return;
+  }
+
+  currentUser = username;
+
+  document.getElementById("loginPage").classList.add("hidden");
+  document.getElementById("appPage").classList.remove("hidden");
+
+  displayOrders();
+}
+
+// ADD ITEM (+)
+function addItem() {
+  const container = document.getElementById("orderItems");
+
+  const div = document.createElement("div");
+  div.className = "flex gap-2 mt-2";
+
+  div.innerHTML = `
+    <input type="text" placeholder="Product"
+      class="w-full p-2 border rounded product">
+
+    <input type="number" placeholder="Qty"
+      class="w-20 p-2 border rounded quantity">
+  `;
+
+  container.appendChild(div);
+}
+
+// ADD ORDER
+function addOrder() {
+
+  const products = document.querySelectorAll(".product");
+  const quantities = document.querySelectorAll(".quantity");
+
+  let items = [];
+
+  products.forEach((p, i) => {
+    if (p.value && quantities[i].value) {
+      items.push({
+        name: p.value,
+        qty: quantities[i].value
+      });
+    }
+  });
+
+  if (items.length === 0) {
+    alert("Add at least one item");
+    return;
+  }
+
+  const order = {
+    user: currentUser,
+    items: items,
+    date: new Date().toLocaleDateString()
+  };
+
+  orders.push(order);
+  localStorage.setItem("orders", JSON.stringify(orders));
+
+  displayOrders();
+}
+
+// DELETE ORDER
+function deleteOrder(index) {
+  orders.splice(index, 1);
+  localStorage.setItem("orders", JSON.stringify(orders));
+  displayOrders();
+}
+
+// DISPLAY ORDERS
+function displayOrders() {
+  const list = document.getElementById("orders");
+  list.innerHTML = "";
+
+  orders
+    .filter(o => o.user === currentUser)
+    .forEach((o, index) => {
+
+      let itemsHTML = o.items.map(item =>
+        `<div>${item.name} - ${item.qty}</div>`
+      ).join("");
+
+      const li = document.createElement("li");
+
+      li.innerHTML = `
+        <div class="bg-white p-3 rounded-xl shadow">
+          ${itemsHTML}
+          <small>${o.date}</small>
+          <button onclick="deleteOrder(${index})"
+            class="block text-red-500 text-sm mt-2">
+            Delete
+          </button>
+        </div>
+      `;
+
+      list.appendChild(li);
+    });
+}
+
+</script>
+
+</body>
+</html>
