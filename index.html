@@ -3,175 +3,245 @@
 <head>
   <meta charset="UTF-8">
   <title>Dessert System</title>
-
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
 <body class="bg-gradient-to-br from-purple-600 to-indigo-700 min-h-screen flex items-center justify-center">
 
-  <!-- LOGIN -->
-  <div id="loginPage" class="bg-white p-6 rounded-2xl shadow-xl w-80">
-    <h2 class="text-xl font-bold mb-4 text-center">🍰 Shop Login</h2>
+<!-- LOGIN -->
+<div id="loginPage" class="bg-white p-6 rounded-2xl shadow-xl w-80">
+  <h2 class="text-xl font-bold mb-4 text-center">🍰 Login</h2>
 
-    <input id="username" placeholder="Shop Name"
-      class="w-full p-2 border rounded mb-3">
+  <input id="username" placeholder="Email"
+    class="w-full p-2 border rounded mb-3">
 
-    <button onclick="login()"
-      class="w-full bg-indigo-600 text-white p-2 rounded hover:bg-indigo-700">
-      Login
+  <input id="password" type="password" placeholder="Password"
+    class="w-full p-2 border rounded mb-3">
+
+  <input id="shopName" placeholder="Shop Name (first time only)"
+    class="w-full p-2 border rounded mb-3">
+
+  <button onclick="login()"
+    class="w-full bg-indigo-600 text-white p-2 rounded">
+    Login
+  </button>
+</div>
+
+<!-- USER -->
+<div id="appPage" class="hidden w-full max-w-md">
+  <h1 class="text-white text-center text-2xl mb-4">Dessert Orders</h1>
+
+  <div class="bg-white p-5 rounded-2xl shadow-xl">
+
+    <div id="orderItems">
+      <div class="flex gap-2 mb-2">
+        <input type="text" placeholder="Product" class="w-full p-2 border rounded product">
+        <input type="number" placeholder="Qty" class="w-20 p-2 border rounded quantity">
+      </div>
+    </div>
+
+    <button onclick="addItem()" class="text-indigo-600">+ Add Item</button>
+
+    <button onclick="addOrder()"
+      class="w-full bg-indigo-600 text-white p-2 rounded mt-3">
+      Submit Order
     </button>
   </div>
 
-  <!-- APP -->
-  <div id="appPage" class="hidden w-full max-w-md">
+  <ul id="orders" class="mt-4"></ul>
+</div>
 
-    <h1 class="text-white text-center text-2xl mb-4">Dessert Orders</h1>
+<!-- ADMIN -->
+<div id="adminPage" class="hidden w-full max-w-lg">
 
-    <!-- ORDER BOX -->
-    <div class="bg-white p-5 rounded-2xl shadow-xl">
+  <h1 class="text-white text-center text-2xl mb-4">👨‍💼 Admin Dashboard</h1>
 
-      <h2 class="text-lg font-semibold mb-3">Make Order</h2>
+  <!-- 📊 REPORT -->
+  <div id="report" class="mb-4"></div>
 
-      <div id="orderItems" class="space-y-3">
+  <div id="adminOrders"></div>
 
-        <div class="flex gap-2">
-          <input type="text" placeholder="Product"
-            class="w-full p-2 border rounded product">
+</div>
 
-          <input type="number" placeholder="Qty"
-            class="w-20 p-2 border rounded quantity">
-        </div>
+<script type="module">
 
-      </div>
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
+import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
 
-      <button onclick="addItem()"
-        class="mt-2 text-sm text-indigo-600">+ Add Item</button>
+const firebaseConfig = {
+  apiKey: "AIzaSyDMudiGIfkmXPJfotm0NeNYgD4-zL1rPS4",
+  authDomain: "rotto-system.firebaseapp.com",
+  projectId: "rotto-system",
+};
 
-      <button onclick="addOrder()"
-        class="w-full bg-indigo-600 text-white p-2 rounded mt-3 hover:bg-indigo-700">
-        Submit Order
-      </button>
-
-    </div>
-
-    <!-- ORDERS -->
-    <div class="mt-4">
-      <h2 class="text-white mb-2">My Orders</h2>
-      <ul id="orders" class="space-y-2"></ul>
-    </div>
-
-  </div>
-
-<script>
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
 
 let currentUser = "";
-let orders = JSON.parse(localStorage.getItem("orders")) || [];
 
 // LOGIN
-function login() {
-  const username = document.getElementById("username").value;
+window.login = async function() {
 
-  if (!username) {
-    alert("Enter shop name");
-    return;
+  const email = username.value.trim();
+  const password = password.value;
+  const shopNameInput = shopName.value;
+
+  try {
+    const userCred = await signInWithEmailAndPassword(auth, email, password);
+    currentUser = userCred.user.email;
+
+    loginPage.classList.add("hidden");
+
+    // ADMIN
+    if (currentUser === "adminrotto2026@gmail.com") {
+      adminPage.classList.remove("hidden");
+      loadAdmin();
+      return;
+    }
+
+    // USER FIRST TIME
+    const shopRef = doc(db, "shops", currentUser);
+    const snap = await getDoc(shopRef);
+
+    if (!snap.exists()) {
+      if (!shopNameInput) {
+        alert("Enter shop name first time");
+        loginPage.classList.remove("hidden");
+        return;
+      }
+
+      await setDoc(shopRef, {
+        email: currentUser,
+        name: shopNameInput
+      });
+    }
+
+    appPage.classList.remove("hidden");
+    displayOrders();
+
+  } catch {
+    alert("Login failed ❌");
   }
+};
 
-  currentUser = username;
-
-  document.getElementById("loginPage").classList.add("hidden");
-  document.getElementById("appPage").classList.remove("hidden");
-
-  displayOrders();
-}
-
-// ADD ITEM (+)
-function addItem() {
-  const container = document.getElementById("orderItems");
-
-  const div = document.createElement("div");
-  div.className = "flex gap-2 mt-2";
-
-  div.innerHTML = `
-    <input type="text" placeholder="Product"
-      class="w-full p-2 border rounded product">
-
-    <input type="number" placeholder="Qty"
-      class="w-20 p-2 border rounded quantity">
+// ADD ITEM
+window.addItem = function() {
+  orderItems.innerHTML += `
+    <div class="flex gap-2 mb-2">
+      <input type="text" class="w-full p-2 border rounded product">
+      <input type="number" class="w-20 p-2 border rounded quantity">
+    </div>
   `;
-
-  container.appendChild(div);
-}
+};
 
 // ADD ORDER
-function addOrder() {
-
-  const products = document.querySelectorAll(".product");
-  const quantities = document.querySelectorAll(".quantity");
+window.addOrder = async function() {
 
   let items = [];
 
-  products.forEach((p, i) => {
-    if (p.value && quantities[i].value) {
-      items.push({
-        name: p.value,
-        qty: quantities[i].value
-      });
+  document.querySelectorAll(".product").forEach((p,i)=>{
+    let q = document.querySelectorAll(".quantity")[i];
+    if(p.value && q.value){
+      items.push({name:p.value, qty:q.value});
     }
   });
 
-  if (items.length === 0) {
-    alert("Add at least one item");
-    return;
-  }
+  const shopRef = doc(db, "shops", currentUser);
+  const snap = await getDoc(shopRef);
 
-  const order = {
+  await addDoc(collection(db, "orders"), {
     user: currentUser,
-    items: items,
+    shop: snap.data().name,
+    items,
     date: new Date().toLocaleDateString()
-  };
+  });
 
-  orders.push(order);
-  localStorage.setItem("orders", JSON.stringify(orders));
+  alert("Saved 🔥");
+};
 
-  displayOrders();
-}
-
-// DELETE ORDER
-function deleteOrder(index) {
-  orders.splice(index, 1);
-  localStorage.setItem("orders", JSON.stringify(orders));
-  displayOrders();
-}
-
-// DISPLAY ORDERS
-function displayOrders() {
-  const list = document.getElementById("orders");
+// USER ORDERS
+async function displayOrders(){
+  let list = document.getElementById("orders");
   list.innerHTML = "";
 
-  orders
-    .filter(o => o.user === currentUser)
-    .forEach((o, index) => {
+  let snap = await getDocs(collection(db,"orders"));
 
-      let itemsHTML = o.items.map(item =>
-        `<div>${item.name} - ${item.qty}</div>`
-      ).join("");
-
-      const li = document.createElement("li");
-
-      li.innerHTML = `
-        <div class="bg-white p-3 rounded-xl shadow">
-          ${itemsHTML}
-          <small>${o.date}</small>
-          <button onclick="deleteOrder(${index})"
-            class="block text-red-500 text-sm mt-2">
-            Delete
-          </button>
-        </div>
-      `;
-
-      list.appendChild(li);
-    });
+  snap.forEach(d=>{
+    let o = d.data();
+    if(o.user===currentUser){
+      list.innerHTML += `<div class="bg-white p-2 mb-2">${o.date}</div>`;
+    }
+  });
 }
+
+// 📊 REPORT
+function generateReport(data){
+
+  let today = new Date().toLocaleDateString();
+  let todayOrders = data.filter(o=>o.date===today);
+
+  let products = {};
+
+  todayOrders.forEach(o=>{
+    o.items.forEach(i=>{
+      products[i.name]=(products[i.name]||0)+Number(i.qty);
+    });
+  });
+
+  let html = `
+    <div class="bg-yellow-100 p-3 rounded-xl">
+      <h2 class="font-bold">📊 Daily Report</h2>
+      <div>Total Orders: ${todayOrders.length}</div>
+  `;
+
+  Object.keys(products).forEach(p=>{
+    html+=`<div>${p}: ${products[p]}</div>`;
+  });
+
+  html+="</div>";
+
+  return html;
+}
+
+// ADMIN
+async function loadAdmin(){
+
+  let container = adminOrders;
+  container.innerHTML="";
+
+  let all = [];
+
+  let snap = await getDocs(collection(db,"orders"));
+
+  snap.forEach(d=>{
+    all.push({id:d.id,...d.data()});
+  });
+
+  report.innerHTML = generateReport(all);
+
+  all.forEach(o=>{
+    let items=o.items.map(i=>`<div>${i.name}-${i.qty}</div>`).join("");
+
+    container.innerHTML+=`
+      <div class="bg-white p-3 mb-2 rounded">
+        <strong>${o.shop}</strong>
+        ${items}
+        <div>${o.date}</div>
+
+        <button onclick="deleteOrder('${o.id}')"
+          class="text-red-500">Delete</button>
+      </div>
+    `;
+  });
+}
+
+// DELETE
+window.deleteOrder = async function(id){
+  await deleteDoc(doc(db,"orders",id));
+  loadAdmin();
+};
 
 </script>
 
