@@ -69,7 +69,7 @@ app.use((err, req, res, _next) => {
 });
 
 // ── MongoDB + start ───────────────────────────────────────────────────────
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 8080;
 
 mongoose
   .connect(process.env.MONGO_URI, {
