@@ -69,4 +69,47 @@ router.delete('/shops/:id', async (req, res) => {
   }
 });
 
+// ── PATCH /api/admin/shops/:id/password ───────────────────────────────────
+// Admin changes a shop's password
+router.patch('/shops/:id/password', async (req, res) => {
+  try {
+    const { password } = req.body;
+    if (!password || password.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters' });
+    }
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ error: 'Shop not found' });
+
+    user.password = password; // hashed by pre-save hook
+    await user.save();
+
+    return res.json({ message: 'Password updated successfully' });
+  } catch (err) {
+    console.error('[PATCH /admin/shops/:id/password]', err);
+    return res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// ── PUT /api/admin/shops/:id ───────────────────────────────────────────────
+// Admin updates shop name and/or email
+router.put('/shops/:id', async (req, res) => {
+  try {
+    const { shopName, email } = req.body;
+    const update = {};
+    if (shopName) update.shopName = shopName.trim();
+    if (email)    update.email    = email.toLowerCase().trim();
+
+    const user = await User.findByIdAndUpdate(req.params.id, update, { new: true });
+    if (!user) return res.status(404).json({ error: 'Shop not found' });
+
+    return res.json({
+      message: 'Shop updated',
+      user: { id: user._id, email: user.email, shopName: user.shopName },
+    });
+  } catch (err) {
+    console.error('[PUT /admin/shops/:id]', err);
+    return res.status(500).json({ error: 'Server error' });
+  }
+});
+
 module.exports = router;
