@@ -1,29 +1,104 @@
-# 🏭 ROTTO SYSTEM v5 — Production Setup Guide
+# Kitch &co. — B2B Order Management Platform
 
-## 📁 Folder Structure
+<img width="1916" height="1053" alt="Screenshot 2026-04-17 192306" src="https://github.com/user-attachments/assets/f2f5a8be-986e-4ab5-baf6-1d694bc38703" />
+
+<img width="1906" height="1054" alt="Screenshot 2026-04-17 193106" src="https://github.com/user-attachments/assets/c0a96a4e-c633-4f1d-a5ca-4552bb98285e" />
+
+
+
+**A live, production B2B ordering platform connecting cafes and restaurants to a central kitchen.**
+
+[🌐 Live Demo](https://rottokitch.com) · [📁 Repository](https://github.com/Joyy183/Rotto-system)
+
+
+
+---
+
+## 📌 Overview
+
+**Kitch &co.** is a full-stack web application built for central kitchen operations. It connects partner shops (cafes, restaurants) directly to the kitchen — allowing them to browse a live menu, place orders, track delivery status in real time, and communicate with support, all from a single dashboard.
+
+The platform features two separate role-based interfaces:
+- **Admin Dashboard** — full kitchen management, analytics, and shop oversight
+- **Shop (Cashier) Dashboard** — ordering, live tracking, and order history
+
+---
+
+## ✨ Features
+
+### 🏪 Landing Page
+- Professional Arabic/English bilingual marketing page
+- 4-step onboarding flow explanation
+- Partner showcase with live stats (orders/month, daily supply, product count)
+- Login gate with JWT session persistence
+
+### 👨‍💼 Admin Dashboard
+| Feature | Description |
+|---|---|
+| **Dashboard** | Real-time stats — total orders, revenue, active shops, pending count |
+| **Analytics** | Monthly revenue chart + orders chart (by shop) via Chart.js |
+| **Product Summary** | Filterable daily product breakdown with quantities and totals |
+| **Shops** | Manage all registered shop accounts |
+| **Orders** | View pending/preparing orders, filter by shop and date |
+| **Returns** | Track and manage return requests |
+| **Orders History** | Full searchable order log with invoice generation |
+| **Archive** | Archived completed orders with date and status filters |
+| **Reports** | Generate daily/weekly/monthly/all-time PDF reports per shop |
+| **Support Inbox** | Threaded support messages from all shops with reply functionality |
+| **Shop Data** | Per-shop analytics and data breakdown |
+
+### 🛒 Shop (Cashier) Dashboard
+| Feature | Description |
+|---|---|
+| **New Order** | Browse categorized menu (Bakery, Pastry, Jars, Bread, Sandwiches, Salads, Whole Cakes) |
+| **Menu Search** | Search items by name in real time |
+| **Live Orders** | Real-time order status tracking (Pending → Preparing → Delivered) |
+| **My History** | Personal order history with daily/weekly/monthly filters |
+| **Support** | Send messages and receive replies from admin |
+
+---
+
+## 🛠️ Tech Stack
+
+### Backend
+- **Node.js** + **Express.js** — REST API server
+- **MongoDB** + **Mongoose** — database and data modeling
+- **Socket.io** — real-time order updates and live notifications
+- **JWT** — authentication and role-based access control
+- **bcrypt** — password hashing
+
+### Frontend
+- **Vanilla JavaScript** — single-page application logic
+- **Tailwind CSS** — utility-first styling
+- **Chart.js** — analytics charts and graphs
+- **jsPDF** — invoice and report PDF generation
+- Bilingual support — **Arabic (RTL) + English (LTR)**
+
+---
+
+## 📁 Project Structure
 
 ```
 rotto-system/
-├── rotto-backend/                ← Node.js + Express backend
-│   ├── server.js                 ← Entry point (Express + Socket.io)
+├── rotto-backend/
+│   ├── server.js              ← Entry point (Express + Socket.io)
 │   ├── package.json
-│   ├── .env.example              ← Copy to .env and fill in values
+│   ├── .env.example
 │   ├── models/
-│   │   ├── User.js               ← Users (admin + shops), bcrypt hashed passwords
-│   │   ├── Order.js              ← Orders with full status flow
-│   │   ├── Return.js             ← Returns / مرتجعات
-│   │   ├── Support.js            ← Support chat threads
-│   │   └── Archive.js            ← Archived orders
+│   │   ├── User.js            ← Users (admin + shops), bcrypt hashed passwords
+│   │   ├── Order.js           ← Orders with full status flow
+│   │   ├── Return.js          ← Returns / مرتجعات
+│   │   ├── Support.js         ← Support chat threads
+│   │   └── Archive.js         ← Archived orders
 │   ├── routes/
-│   │   ├── auth.js               ← POST /api/login
-│   │   ├── admin.js              ← POST /api/admin/create-user, GET /api/admin/shops
-│   │   ├── orders.js             ← GET/POST/PUT /api/orders, archive
-│   │   ├── returns.js            ← GET/POST /api/returns
-│   │   └── support.js            ← GET/POST /api/support, reply, mark-read
+│   │   ├── auth.js            ← POST /api/login
+│   │   ├── admin.js           ← POST /api/admin/create-user, GET /api/admin/shops
+│   │   ├── orders.js          ← GET/POST/PUT /api/orders, archive
+│   │   ├── returns.js         ← GET/POST /api/returns
+│   │   └── support.js         ← GET/POST /api/support, reply, mark-read
 │   └── middleware/
-│       └── auth.js               ← JWT protect + requireRole guard
-│
-└── rotto_system_v5.html          ← Frontend (zero UI changes, Firebase removed)
+│       └── auth.js            ← JWT protect + requireRole guard
+└── rotto_system_v5.html       ← Frontend (single-file SPA)
 ```
 
 ---
@@ -50,216 +125,87 @@ rotto-system/
 
 ---
 
-## ⚡ Local Setup (5 minutes)
+## 🚀 Local Setup (5 minutes)
 
-### 1. Install MongoDB
+### Prerequisites
+- Node.js v18+
+- MongoDB (local or Atlas)
+
+### 1. Clone the repo
 ```bash
-# macOS
-brew tap mongodb/brew && brew install mongodb-community && brew services start mongodb-community
-
-# Ubuntu / Debian
-sudo apt install -y mongodb && sudo systemctl start mongodb
-
-# Windows — download installer from https://www.mongodb.com/try/download/community
+git clone https://github.com/Joyy183/Rotto-system.git
+cd Rotto-system/rotto-backend
 ```
 
-### 2. Install backend dependencies
+### 2. Install dependencies
 ```bash
-cd rotto-backend
 npm install
 ```
 
 ### 3. Configure environment
 ```bash
 cp .env.example .env
-# Edit .env — at minimum set JWT_SECRET to a long random string
 ```
 
-### 4. Start the backend
+Edit `.env`:
+```env
+MONGO_URI=your_mongodb_connection_string
+JWT_SECRET=your_secret_key
+PORT=5000
+```
+
+### 4. Run the server
 ```bash
-# Development (auto-restart on file change)
-npm run dev
-
-# Production
-npm start
-```
-
-You should see:
-```
-[MongoDB] connected: mongodb://127.0.0.1:27017/rotto_system
-[Seed] Admin created: adminrotto2026@gmail.com  (default password: Admin@2026!)
-[Seed] Admin created: adminkitch2026@gmail.com  (default password: Admin@2026!)
-[Server] running on http://localhost:5000
+node server.js
 ```
 
 ### 5. Open the frontend
-Open `rotto_system_v5.html` directly in your browser
-(or serve it with any static file server — see below).
+Open `rotto_system_v5.html` in your browser, or serve it with any static file server.
 
-### 6. Login
-- **Admin**: `adminrotto2026@gmail.com` / `Admin@2026!`
-- ⚠️ **Change the admin password immediately after first login** (update in MongoDB or add a change-password endpoint).
+The app will auto-connect to `http://localhost:5000`.
 
 ---
 
-## 🚀 Production Deployment
+## 📸 Screenshots
 
-### Option A — VPS / Server (Recommended)
+### Landing Page
+> A bilingual marketing page with partner showcase and login gate
 
-```bash
-# 1. Install Node.js 20+ and MongoDB on your server
+### Admin Dashboard
+> Real-time stats, revenue charts, and full order management
 
-# 2. Upload files
-scp -r rotto-backend/ user@your-server:/var/www/rotto/
-scp rotto_system_v5.html user@your-server:/var/www/rotto/public/
+### Orders & Reports
+> Filter by shop and date, generate PDF reports
 
-# 3. Install PM2 process manager
-npm install -g pm2
+### Shop View — New Order
+> Categorized menu with search, add to cart, and submit
 
-# 4. Configure production .env
-cd /var/www/rotto/rotto-backend
-cp .env.example .env
-nano .env   # Set MONGO_URI, JWT_SECRET, CORS_ORIGIN
-
-# 5. Start with PM2
-pm2 start server.js --name rotto-backend
-pm2 save
-pm2 startup   # Auto-start on reboot
-
-# 6. Serve frontend with Nginx
-sudo nano /etc/nginx/sites-available/rotto
-```
-
-**Nginx config:**
-```nginx
-server {
-    listen 80;
-    server_name yourdomain.com;
-
-    # Serve frontend
-    location / {
-        root /var/www/rotto/public;
-        try_files $uri $uri/ /rotto_system_v5.html;
-    }
-
-    # Proxy API + Socket.io to Node.js
-    location /api/ {
-        proxy_pass http://localhost:5000;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-    }
-
-    location /socket.io/ {
-        proxy_pass http://localhost:5000;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
-    }
-}
-```
-
-```bash
-sudo ln -s /etc/nginx/sites-available/rotto /etc/nginx/sites-enabled/
-sudo nginx -t && sudo systemctl reload nginx
-```
-
-**Don't forget HTTPS:**
-```bash
-sudo apt install certbot python3-certbot-nginx
-sudo certbot --nginx -d yourdomain.com
-```
-
-### Option B — Railway.app (Easy cloud deploy)
-
-```bash
-# 1. Push rotto-backend/ to GitHub
-
-# 2. Create new project on railway.app
-# 3. Add MongoDB plugin
-# 4. Set environment variables in Railway dashboard:
-#    MONGO_URI=${{MongoDB.MONGODB_URL}}
-#    JWT_SECRET=your_long_random_secret
-#    CORS_ORIGIN=*
-#    ADMIN_EMAILS=adminrotto2026@gmail.com,adminkitch2026@gmail.com
-#    PORT=5000
-
-# 5. Deploy — Railway auto-detects Node.js
-
-# 6. Update API_BASE in rotto_system_v5.html line:
-#    const API_BASE = 'https://your-app.railway.app/api';
-```
-
-### Option C — Render.com (Free tier)
-
-Similar to Railway — connect GitHub repo, add environment variables, deploy.
+### Support Inbox
+> Threaded messaging between shops and admin
 
 ---
 
-## 🔧 Frontend Configuration
+## 👥 Roles
 
-In `rotto_system_v5.html`, find and update these two lines near the top of the `<script>` block:
+| Role | Access |
+|------|--------|
+| **Admin** | Full platform access — all shops, orders, returns, reports, support |
+| **Shop (Cashier)** | Own orders, menu, live tracking, order history, support |
 
-```javascript
-const API_BASE = 'http://localhost:5000/api';   // ← your backend URL
-
-// And in initSocket():
-socket = io('http://localhost:5000');            // ← same backend URL
-```
-
-For production, change both to your deployed server URL:
-```javascript
-const API_BASE = 'https://api.yourdomain.com/api';
-socket = io('https://api.yourdomain.com');
-```
+Sessions are persisted via `localStorage` JWT tokens with automatic expiry handling.
 
 ---
 
-## 🔐 Security Notes
+## 🔒 Security
 
-1. **Change default admin passwords** immediately after first deploy
-2. **JWT_SECRET** must be a long (32+ char) random string in production
-3. **CORS_ORIGIN** should be set to your frontend domain in production, not `*`
-4. All routes are protected — the backend never trusts frontend-supplied identity
-5. Passwords are hashed with bcrypt (12 salt rounds)
-6. The `shop` field on orders is always taken from the server-side JWT payload, never from the request body
+- All routes protected via JWT middleware
+- Role-based access (`requireRole('admin')` guard on admin routes)
+- Passwords hashed with bcrypt before storage
+- `.env` used for all secrets — never committed to repo
 
 ---
 
-## 💡 Socket.io Events Reference
+## 📄 License
 
-| Event | Direction | Description |
-|-------|-----------|-------------|
-| `orderCreated` | Server → Clients | New order submitted by shop |
-| `orderUpdated` | Server → Clients | Order status changed |
-| `shopCreated` | Server → Clients | New shop account created |
-| `shopDeleted` | Server → Clients | Shop account deleted |
-| `returnCreated` | Server → Clients | New return registered |
-| `ordersArchived` | Server → Clients | Batch archive completed |
-| `supportMessage` | Server → Clients | Shop sent support message |
-| `supportReply` | Server → Clients | Admin replied to support |
-
----
-
-## 🛠 Troubleshooting
-
-**MongoDB connection error**
-→ Make sure MongoDB is running: `sudo systemctl status mongodb`
-
-**CORS errors in browser**
-→ Set `CORS_ORIGIN=*` in .env (or your frontend URL for production)
-
-**401 Unauthorized on every request**
-→ Check that JWT_SECRET in .env matches what was used to generate the token (restart server after changing .env)
-
-**Socket.io not connecting**
-→ Make sure the `io('URL')` in frontend matches your server URL exactly (including protocol)
-
-**Admin password**
-→ Default is `Admin@2026!` — change it by connecting to MongoDB:
-```bash
-mongosh rotto_system
-db.users.updateOne({email:"adminrotto2026@gmail.com"},{$set:{password:"NEW_BCRYPT_HASH"}})
-# Or add a change-password API endpoint
-```
+Built as a production system for **Kitch &co. — Central Kitchen & Catering**.  
+© Kitch &co. 2025. All rights reserved.
