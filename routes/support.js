@@ -17,7 +17,7 @@ function serialize(doc) {
 router.get('/', async (req, res) => {
   try {
     let docs;
-    if (req.user.role === 'admin') {
+    if (req.user.role === 'admin' || req.user.role === 'staff') {
       docs = await Support.find().sort({ updatedAt: -1 });
     } else {
       const thread = await Support.findOne({ shopId: req.user._id });
@@ -62,7 +62,7 @@ router.post('/message', requireRole('shop'), async (req, res) => {
 
 // ── POST /api/support/:threadId/reply ─────────────────────────────────────
 // Admin replies to a thread
-router.post('/:threadId/reply', requireRole('admin'), async (req, res) => {
+router.post('/:threadId/reply', requireRole('admin', 'staff'), async (req, res) => {
   try {
     const { text } = req.body;
     if (!text) return res.status(400).json({ error: 'text is required' });
@@ -85,7 +85,7 @@ router.post('/:threadId/reply', requireRole('admin'), async (req, res) => {
 
 // ── PATCH /api/support/:threadId/read ─────────────────────────────────────
 // Admin marks thread as read
-router.patch('/:threadId/read', requireRole('admin'), async (req, res) => {
+router.patch('/:threadId/read', requireRole('admin', 'staff'), async (req, res) => {
   try {
     await Support.findByIdAndUpdate(req.params.threadId, { hasNew: false });
     return res.json({ ok: true });

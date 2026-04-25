@@ -60,7 +60,7 @@ router.get('/', async (req, res) => {
     if (req.user.role === 'shop') {
       query.userId = req.user._id;
     }
-    // Admin sees everything (including archived if ?archived=true)
+    // Admin/staff see everything (including archived if ?archived=true)
     if (req.query.archived !== 'true') {
       query.archived = { $ne: true };
     }
@@ -103,8 +103,8 @@ router.put('/:id', async (req, res) => {
       return res.json(serialized);
     }
 
-    // ── Admin can update anything ──────────────────────────────────────────
-    if (req.user.role === 'admin') {
+    // ── Admin or permitted staff can update orders ─────────────────────────
+    if (req.user.role === 'admin' || req.user.permissions?.canManageOrders === true) {
       if (status) {
         order.status = status;
         if (status === 'Preparing' || status === 'Partial Accept') order.preparingTime = now;
@@ -130,7 +130,10 @@ router.put('/:id', async (req, res) => {
 
 // ── POST /api/orders/archive ───────────────────────────────────────────────
 // Admin: move completed orders to archive collection
-router.post('/archive', requireRole('admin'), async (req, res) => {
+router.post('/archive', requireRole('admin', 'staff'), async (req, res) => {
+  if (req.user.role !== 'admin' && req.user.permissions?.canSeeArchive !== true) {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
   try {
     const Archive = require('../models/Archive');
     const toArchive = await Order.find({
@@ -169,7 +172,10 @@ router.post('/archive', requireRole('admin'), async (req, res) => {
 });
 
 // ── GET /api/orders/archive ────────────────────────────────────────────────
-router.get('/archive', requireRole('admin'), async (req, res) => {
+router.get('/archive', requireRole('admin', 'staff'), async (req, res) => {
+  if (req.user.role !== 'admin' && req.user.permissions?.canSeeArchive !== true) {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
   try {
     const Archive = require('../models/Archive');
     const docs = await Archive.find().sort({ archivedAt: -1 });

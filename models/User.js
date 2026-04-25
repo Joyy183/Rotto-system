@@ -5,8 +5,14 @@ const userSchema = new mongoose.Schema(
   {
     email:    { type: String, required: true, unique: true, lowercase: true, trim: true },
     password: { type: String, required: true },
-    role:     { type: String, enum: ['admin', 'shop'], required: true },
+    role:     { type: String, enum: ['admin', 'shop', 'staff'], required: true },
     shopName: { type: String, default: '' },
+    staffName: { type: String, default: '' },
+    staffRole: {
+      type: String,
+      enum: ['full_admin', 'orders_mgr', 'cashier', 'viewer', 'custom', ''],
+      default: '',
+    },
     permissions: { type: Object, default: {} },
   },
   { timestamps: true }

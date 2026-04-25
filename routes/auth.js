@@ -38,6 +38,8 @@ router.post('/login', async (req, res) => {
         email:    user.email,
         role:     user.role,
         shopName: user.shopName,
+        staffName: user.staffName,
+        staffRole: user.staffRole,
         permissions: user.permissions || {},
       },
     });

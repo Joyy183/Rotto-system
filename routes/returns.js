@@ -54,7 +54,7 @@ router.post('/', async (req, res) => {
 router.get('/', async (req, res) => {
   try {
     let docs;
-    if (req.user.role === 'admin') {
+    if (req.user.role === 'admin' || req.user.role === 'staff') {
       docs = await Return.find().sort({ date: -1 });
     } else {
       // find orders belonging to this shop, then returns for those orders
