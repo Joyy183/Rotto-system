@@ -141,12 +141,14 @@ router.delete('/shops/:id', async (req, res) => {
 // Admin changes a shop's password
 router.patch('/shops/:id/password', async (req, res) => {
   try {
+    if (!isAdmin(req)) return res.status(403).json({ error: 'Only admins can reset passwords' });
+
     const { password } = req.body;
     if (!password || password.length < 6) {
       return res.status(400).json({ error: 'Password must be at least 6 characters' });
     }
     const user = await User.findById(req.params.id);
-    if (!user) return res.status(404).json({ error: 'Shop not found' });
+    if (!user || user.role === 'admin') return res.status(404).json({ error: 'Shop not found' });
 
     user.password = password; // hashed by pre-save hook
     await user.save();
@@ -162,6 +164,8 @@ router.patch('/shops/:id/password', async (req, res) => {
 // Admin updates shop name and/or email
 router.put('/shops/:id', async (req, res) => {
   try {
+    if (!isAdmin(req)) return res.status(403).json({ error: 'Only admins can update shops' });
+
     const { shopName, email, permissions } = req.body;
     const update = {};
     if (shopName) update.shopName = shopName.trim();

@@ -29,7 +29,7 @@ router.post('/', async (req, res) => {
 
     let resolvedShop;
     if (isWaste) {
-      resolvedShop = shopName || '';
+      resolvedShop = req.user.shopName || shopName || '';
     } else {
       const order = await Order.findById(orderId);
       if (!order) return res.status(404).json({ error: 'Order not found' });
