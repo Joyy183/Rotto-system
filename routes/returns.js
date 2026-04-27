@@ -17,28 +17,39 @@ function serialize(doc) {
 // ── POST /api/returns ──────────────────────────────────────────────────────
 router.post('/', async (req, res) => {
   try {
-    const { orderId, items, total, reason } = req.body;
-    if (!orderId || !items || !total) {
+    const { orderId, items, total, reason, type, shop: shopName } = req.body;
+    const isWaste = type === 'waste';
+
+    if (!isWaste && (!orderId || !items || !total)) {
       return res.status(400).json({ error: 'orderId, items and total are required' });
     }
+    if (isWaste && (!items || !total)) {
+      return res.status(400).json({ error: 'items and total are required' });
+    }
 
-    const order = await Order.findById(orderId);
-    if (!order) return res.status(404).json({ error: 'Order not found' });
+    let resolvedShop;
+    if (isWaste) {
+      resolvedShop = shopName || '';
+    } else {
+      const order = await Order.findById(orderId);
+      if (!order) return res.status(404).json({ error: 'Order not found' });
 
-    // Shops can only return their own orders
-    if (req.user.role === 'shop' && order.userId.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ error: 'Not your order' });
+      // Shops can only return their own orders
+      if (req.user.role === 'shop' && order.userId.toString() !== req.user._id.toString()) {
+        return res.status(403).json({ error: 'Not your order' });
+      }
+      resolvedShop = order.shop;
+      await Order.findByIdAndUpdate(orderId, { hasReturn: true, returnStatus: 'Pending' });
     }
 
     const ret = await Return.create({
-      orderId,
-      shop:   order.shop,
+      orderId: isWaste ? null : orderId,
+      shop:    resolvedShop,
       items,
       total,
-      reason: reason || '',
+      reason:  reason || '',
+      type:    type   || '',
     });
-
-    await Order.findByIdAndUpdate(orderId, { hasReturn: true, returnStatus: 'Pending' });
 
     const serialized = serialize(ret);
     req.app.get('io')?.emit('returnCreated', serialized);
@@ -57,10 +68,15 @@ router.get('/', async (req, res) => {
     if (req.user.role === 'admin' || req.user.role === 'staff') {
       docs = await Return.find().sort({ date: -1 });
     } else {
-      // find orders belonging to this shop, then returns for those orders
+      // find orders belonging to this shop, then returns for those orders + waste entries
       const myOrders = await Order.find({ userId: req.user._id }).select('_id');
       const ids = myOrders.map(o => o._id);
-      docs = await Return.find({ orderId: { $in: ids } }).sort({ date: -1 });
+      docs = await Return.find({
+        $or: [
+          { orderId: { $in: ids } },
+          { type: 'waste', shop: req.user.shopName },
+        ],
+      }).sort({ date: -1 });
     }
     return res.json(docs.map(serialize));
   } catch (err) {

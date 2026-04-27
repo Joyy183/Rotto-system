@@ -15,11 +15,12 @@ const returnItemSchema = new mongoose.Schema(
 
 const returnSchema = new mongoose.Schema(
   {
-    orderId: { type: mongoose.Schema.Types.ObjectId, ref: 'Order', required: true },
+    orderId: { type: mongoose.Schema.Types.ObjectId, ref: 'Order', default: null },
     shop:    { type: String, required: true },
     items:   { type: [returnItemSchema], required: true },
     total:   { type: Number, required: true, min: 0 },
     reason:  { type: String, default: '' },
+    type:    { type: String, default: '' },
     status:  { type: String, enum: ['Pending', 'Resolved'], default: 'Pending' },
     date:    { type: Date, default: Date.now },
   },
